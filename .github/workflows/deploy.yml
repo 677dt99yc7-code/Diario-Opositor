@@ -1,0 +1,64 @@
+name: Publicar Diario Opositor
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar proyecto
+        run: |
+          mkdir -p app
+          unzip -q Diario-Opositor-GitHub-Pages.zip -d app
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Construir aplicación
+        run: |
+          PROJECT=$(find app -name package.json -print -quit | xargs dirname)
+
+          if [ -n "$PROJECT" ]; then
+            cd "$PROJECT"
+            npm install
+            npm run build
+            cp -r dist "$GITHUB_WORKSPACE/site"
+          else
+            mkdir -p "$GITHUB_WORKSPACE/site"
+            cp -r app/* "$GITHUB_WORKSPACE/site/"
+          fi
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar página
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
