@@ -21,8 +21,7 @@ jobs:
 
       - name: Preparar proyecto
         run: |
-          mkdir -p app
-          unzip -q Diario-Opositor-GitHub-Pages.zip -d app
+          mkdir -p a
 
       - name: Instalar Node
         uses: actions/setup-node@v4
